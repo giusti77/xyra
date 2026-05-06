@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "Financial Copilot",
   "main": "index.html",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build && next export",
+    "start": "next start"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.20.0",
     "next": "^16.2.4",
