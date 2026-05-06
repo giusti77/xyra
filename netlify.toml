@@ -1,9 +1,6 @@
 [build]
-  publish = "."
+  command = "npm run build"
+  publish = "out"
 
 [functions]
-  directory = "functions"
   node_bundler = "esbuild"
-
-[context.production.environment]
-  NODE_VERSION = "20"
