@@ -6,23 +6,19 @@ export default async function handler(req, res) {
   const { message, transactions } = req.body;
 
   try {
+    const apiKey = 'sk-9df3bf8dffb5491c92a0567f7daaf965';
+    
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
+        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
         model: 'deepseek-chat',
         messages: [
-          {
-            role: 'system',
-            content: 'Você é um assistente financeiro especializado. Seja amigável e ofereça insights úteis.'
-          },
-          {
-            role: 'user',
-            content: `${message}\n\nTransações: ${JSON.stringify(transactions || [])}`
-          }
+          { role: 'system', content: 'Você é um assistente financeiro.' },
+          { role: 'user', content: message }
         ],
         temperature: 0.7,
         max_tokens: 500
@@ -34,7 +30,6 @@ export default async function handler(req, res) {
 
     res.status(200).json({ reply });
   } catch (error) {
-    console.error('Error:', error);
     res.status(500).json({ error: error.message });
   }
 }
