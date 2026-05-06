@@ -1626,7 +1626,16 @@ async function handleRegister(email, password, fullName) {
     options: { data: { full_name: fullName } }
   });
   if (error) throw error;
-  return data.user;
+  
+  // Fazer login automático após registro
+  const loginResult = await supabase.auth.signInWithPassword({ email, password });
+  if (loginResult.error) throw loginResult.error;
+  
+  // Redirecionar para o app
+  const user = loginResult.data.user;
+  showApp(fullName || user.email);
+  
+  return user;
 }
 
 async function handleLogout() {
