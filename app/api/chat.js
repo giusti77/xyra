@@ -6,11 +6,17 @@ export default async function handler(req, res) {
   const { message, transactions } = req.body;
 
   try {
+    const apiKey = process.env.DEEPSEEK_API_KEY || 'sk-9df3bf8dffb5491c92a0567f7daaf965';
+    
+    if (!apiKey) {
+      return res.status(500).json({ error: 'API key not configured' });
+    }
+
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
+        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
         model: 'deepseek-chat',
@@ -28,6 +34,12 @@ export default async function handler(req, res) {
         max_tokens: 500
       })
     });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('DeepSeek error:', error);
+      return res.status(response.status).json({ error: error });
+    }
 
     const data = await response.json();
     const reply = data.choices?.[0]?.message?.content || 'Erro ao processar';
