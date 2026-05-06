@@ -2810,20 +2810,30 @@ function isCurrentMonth(dateStr) {
 
         async function getResponse(msg, isAuto = false) {
             try {
-                const res = await fetch('/.netlify/functions/ai', {
+                const apiKey = 'sk-9df3bf8dffb5491c92a0567f7daaf965';
+                const res = await fetch('https://api.deepseek.com/chat/completions', {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiKey
+                    },
                     body: JSON.stringify({
-                        message: msg,
-                        transactions: state.transactions
+                        model: 'deepseek-chat',
+                        messages: [
+                            { role: 'system', content: 'Você é um assistente financeiro especializado em ajudar usuários a gerenciar suas finanças pessoais. Seja amigável, direto e ofereça insights úteis baseado nos dados fornecidos.' },
+                            { role: 'user', content: msg + '\n\nTransações do usuário: ' + JSON.stringify(state.transactions) }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 500
                     })
                 });
                 const data = await res.json();
-                let reply = data.reply || 'Desculpe, tive um problema ao processar isso.';
-
-                // Formatação simples de Markdown para HTML (apenas negrito por enquanto)
+                let reply = data.choices?.[0]?.message?.content || 'Desculpe, tive um problema ao processar isso.';
+                
+                // Formatação simples de Markdown para HTML
                 reply = reply.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                 reply = reply.replace(/\n/g, '<br>');
-
+                
                 return reply;
             } catch (err) {
                 console.error('Chat error:', err);
