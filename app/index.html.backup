@@ -1606,7 +1606,6 @@
             }
         }
     </style>
-<script src="/supabase-functions.js"></script>
 </head>
 
 <body>
@@ -2129,12 +2128,6 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_w5a_CYoqxN2T38Hm_LEoBQ_LzicaQ22';
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        
-        // ── Supabase Config ────────────────────────────────────────
-        const SUPABASE_URL = 'https://bdnhtgawhzsikjquwvzj.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_w5a_CYoqxN2T38Hm_LEoBQ_LzicaQ22';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // ── State ─────────────────────────────────────────────────
         const state = {
