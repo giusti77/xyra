@@ -1,8 +1,12 @@
+import fs from 'fs';
+import path from 'path';
+
 export default function Home() {
+  // Lê o HTML original
+  const htmlPath = path.join(process.cwd(), 'app/index.html');
+  const htmlContent = fs.readFileSync(htmlPath, 'utf-8');
+
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
-      <h1>Xyra Finance</h1>
-      <p>Financial Copilot - Em desenvolvimento</p>
-    </div>
-  )
+    <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+  );
 }
