@@ -2819,15 +2819,26 @@ function isCurrentMonth(dateStr) {
 
         async function getResponse(msg, isAuto = false) {
             try {
+                console.log('Enviando mensagem:', msg);
                 const res = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         message: msg,
-                        transactions: state.transactions
+                        transactions: state.transactions || []
                     })
                 });
+                
+                console.log('Status:', res.status);
+                
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    console.error('API error:', errorText);
+                    throw new Error('API returned ' + res.status);
+                }
+                
                 const data = await res.json();
+                console.log('Response:', data);
                 let reply = data.reply || 'Desculpe, tive um problema ao processar isso.';
                 
                 // Formatação de Markdown para HTML
@@ -2837,7 +2848,7 @@ function isCurrentMonth(dateStr) {
                 return reply;
             } catch (err) {
                 console.error('Chat error:', err);
-                return 'Ocorreu um erro na conexão com a Xyra.';
+                return 'Erro: ' + err.message;
             }
         }
 
