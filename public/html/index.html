@@ -1,0 +1,3013 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xyra — Copiloto Financeiro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg: #0E0E0C;
+            --bg-elev: #161613;
+            --bg-card: #1C1C19;
+            --fg: #F5F2EC;
+            --fg-dim: #8F8C84;
+            --fg-faint: #3A3935;
+            --line: #23221E;
+            --lime: #B6F13A;
+            --lime-deep: #86B22A;
+            --red: #E84040;
+            --ink: #0E0E0C;
+            --glass: rgba(28, 28, 25, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --shadow-premium: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            display: flex;
+            min-height: 100vh;
+            font-size: 15px;
+            line-height: 1.55;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 400;
+            letter-spacing: -0.02em;
+            line-height: 0.98;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        ::selection {
+            background: var(--lime);
+            color: var(--ink);
+        }
+
+        /* ── Login screen ────────────────────────────── */
+        .login-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 9000;
+            display: flex;
+            align-items: stretch;
+        }
+
+        .login-screen.hidden {
+            display: none;
+        }
+
+        .login-left {
+            width: 50%;
+            background: var(--bg-elev);
+            border-right: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            padding: 48px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-left::before {
+            content: "gst*";
+            position: absolute;
+            bottom: -60px;
+            left: -20px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 280px;
+            font-weight: 400;
+            letter-spacing: -12px;
+            color: color-mix(in srgb, var(--lime) 6%, transparent);
+            line-height: 1;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .login-logo {
+            display: block;
+            height: 32px;
+            width: auto;
+            margin-bottom: auto;
+        }
+
+        .login-tagline {
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-tagline .eyebrow-dot {
+            display: inline-block;
+        }
+
+        .login-tagline-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--fg-dim);
+            margin-bottom: 20px;
+        }
+
+        .login-tagline h2 {
+            font-size: clamp(36px, 4vw, 56px);
+            font-weight: 400;
+            letter-spacing: -0.03em;
+            line-height: 1.05;
+            color: var(--fg);
+        }
+
+        .login-tagline h2 em {
+            font-style: italic;
+            font-weight: 300;
+            color: var(--fg-dim);
+        }
+
+        .login-tagline p {
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--fg-dim);
+            max-width: 36ch;
+            line-height: 1.6;
+        }
+
+        .login-right {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px;
+        }
+
+        .login-form-wrap {
+            width: 100%;
+            max-width: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .login-form-title {
+            font-size: 28px;
+            font-weight: 400;
+            letter-spacing: -0.03em;
+        }
+
+        .login-form-subtitle {
+            font-size: 13px;
+            color: var(--fg-dim);
+            margin-top: 6px;
+        }
+
+        .login-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .login-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .login-field label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--fg-dim);
+        }
+
+        .login-field input {
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 12px 14px;
+            color: var(--fg);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            transition: border-color 0.15s;
+            width: 100%;
+        }
+
+        .login-field input:focus {
+            outline: none;
+            border-color: var(--lime);
+        }
+
+        .login-field input::placeholder {
+            color: var(--fg-faint);
+        }
+
+        .login-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .login-remember {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--fg-dim);
+            cursor: pointer;
+        }
+
+        .login-remember input[type="checkbox"] {
+            accent-color: var(--lime);
+            width: 14px;
+            height: 14px;
+        }
+
+        .login-forgot {
+            color: var(--fg-dim);
+            font-size: 12px;
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+
+        .login-forgot:hover {
+            color: var(--lime);
+        }
+
+        .login-submit {
+            width: 100%;
+            padding: 13px;
+            background: var(--lime);
+            color: var(--ink);
+            border: none;
+            border-radius: 999px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            letter-spacing: -0.01em;
+        }
+
+        .login-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px color-mix(in srgb, var(--lime) 30%, transparent);
+        }
+
+        .login-submit:active {
+            transform: translateY(0);
+        }
+
+        .login-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--fg-faint);
+        }
+
+        .login-divider::before,
+        .login-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--line);
+        }
+
+        .login-alt-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            color: var(--fg-dim);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .login-alt-btn:hover {
+            border-color: var(--fg-faint);
+            color: var(--fg);
+        }
+
+        .login-signup {
+            text-align: center;
+            font-size: 13px;
+            color: var(--fg-dim);
+        }
+
+        .login-signup a {
+            color: var(--lime);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .login-signup a:hover {
+            text-decoration: underline;
+        }
+
+        .login-error {
+            display: none;
+            font-size: 12px;
+            color: var(--red);
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.04em;
+            padding: 10px 14px;
+            border: 1px solid color-mix(in srgb, var(--red) 30%, transparent);
+            border-radius: 6px;
+            background: color-mix(in srgb, var(--red) 8%, transparent);
+        }
+
+        .login-error.visible {
+            display: block;
+        }
+
+        @media (max-width: 760px) {
+            .login-left {
+                display: none;
+            }
+
+            .login-right {
+                padding: 32px 24px;
+            }
+        }
+
+        /* ── Login Visuals ──────────────────────────── */
+        .login-visual-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gst-asterisk {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 180px;
+            color: var(--lime);
+            text-shadow: 0 0 50px color-mix(in srgb, var(--lime) 40%, transparent);
+            animation: asteriskFloat 6s ease-in-out infinite;
+            z-index: 2;
+            line-height: 1;
+            user-select: none;
+        }
+
+        .orb-aura {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, color-mix(in srgb, var(--lime) 15%, transparent) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: orbPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes asteriskFloat {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-20px) rotate(10deg);
+            }
+        }
+
+        @keyframes orbPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.4;
+            }
+
+            50% {
+                transform: scale(1.3);
+                opacity: 0.7;
+            }
+        }
+
+        @keyframes orbPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.4);
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes orbRotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ── App shell (hidden until login) ─────────── */
+        .app-shell {
+            display: none;
+            width: 100%;
+        }
+
+        .app-shell.visible {
+            display: flex;
+        }
+
+        /* ── Sidebar ─────────────────────────────────── */
+        .sidebar {
+            width: 240px;
+            background: var(--bg-elev);
+            border-right: 1px solid var(--line);
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            flex-shrink: 0;
+        }
+
+        .logo {
+            display: block;
+            height: 28px;
+            width: auto;
+            margin-bottom: 48px;
+        }
+
+        .nav-menu {
+            list-style: none;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            margin-bottom: 2px;
+        }
+
+        .nav-link {
+            color: var(--fg-dim);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: var(--bg-card);
+            color: var(--fg);
+        }
+
+        .nav-link.active {
+            background: var(--bg-card);
+            color: var(--fg);
+            border-color: var(--line);
+        }
+
+        .nav-link.active .nav-dot {
+            background: var(--lime);
+        }
+
+        .nav-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--fg-faint);
+            flex-shrink: 0;
+            transition: background 0.15s;
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid var(--line);
+            padding-top: 20px;
+        }
+
+        .btn-logout {
+            width: 100%;
+            padding: 8px 12px;
+            background: transparent;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            color: var(--fg-dim);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-logout:hover {
+            border-color: var(--fg-faint);
+            color: var(--fg);
+        }
+
+        .sidebar-brand {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .sidebar-brand-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            color: var(--fg-faint);
+        }
+
+        .sidebar-brand-name span {
+            color: var(--lime);
+        }
+
+        .sidebar-brand-version {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--fg-faint);
+        }
+
+        .sidebar-brand-sig {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--fg-faint);
+            opacity: 0.6;
+            line-height: 1.5;
+        }
+
+        /* ── Main ────────────────────────────────────── */
+        .main-content {
+            flex-grow: 1;
+            padding: 40px 48px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            overflow-y: auto;
+        }
+
+        /* ── Pages ───────────────────────────────────── */
+        .page {
+            display: none;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .page.active {
+            display: flex;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        /* ── Header ──────────────────────────────────── */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-bottom: 32px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .header-left .eyebrow {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            color: var(--fg-dim);
+        }
+
+        .eyebrow-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--lime);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--lime) 20%, transparent);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 400;
+            letter-spacing: -0.03em;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* ── Buttons ─────────────────────────────────── */
+        .btn {
+            padding: 9px 18px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -0.01em;
+        }
+
+        .btn-primary {
+            background: var(--lime);
+            color: var(--ink);
+            border: 1px solid var(--lime);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--fg-dim);
+            border: 1px solid var(--line);
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--fg-faint);
+            color: var(--fg);
+        }
+
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 12px;
+        }
+
+        /* ── KPI Grid ────────────────────────────────── */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .kpi-card {
+            padding: 28px 24px;
+            border-right: 1px solid var(--line);
+            transition: background 0.2s;
+        }
+
+        .kpi-card:last-child {
+            border-right: none;
+        }
+
+        .kpi-card:hover {
+            background: var(--bg-elev);
+        }
+
+        .kpi-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--fg-dim);
+            margin-bottom: 12px;
+        }
+
+        .kpi-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 28px;
+            font-weight: 500;
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
+
+        .kpi-value.positive {
+            color: var(--lime);
+        }
+
+        .kpi-value.negative {
+            color: var(--red);
+        }
+
+        .kpi-delta {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--fg-dim);
+        }
+
+        /* ── Cards ───────────────────────────────────── */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 28px 24px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: var(--fg-faint);
+        }
+
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-premium);
+        }
+
+        /* ── AI Insights Banner ────────────────────── */
+        .ai-insights-banner {
+            grid-column: span 4;
+            background: linear-gradient(135deg, color-mix(in srgb, var(--lime) 5%, transparent), transparent);
+            border: 1px solid color-mix(in srgb, var(--lime) 15%, transparent);
+            border-radius: 12px;
+            padding: 24px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            animation: slideInDown 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .ai-insights-banner.visible {
+            display: flex;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ai-insights-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--lime);
+        }
+
+        .ai-insights-content {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--fg);
+        }
+
+        .ai-insights-content strong {
+            color: var(--lime);
+        }
+
+        .card-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--fg-dim);
+            margin-bottom: 20px;
+        }
+
+        /* ── Two/Three col ───────────────────────────── */
+        .two-col {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        .three-col {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        /* ── Chart ───────────────────────────────────── */
+        .chart-container {
+            position: relative;
+            height: 260px;
+        }
+
+        .chart-container-sm {
+            position: relative;
+            height: 200px;
+        }
+
+        /* ── Transactions ────────────────────────────── */
+        .transactions-list {
+            list-style: none;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-details {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .transaction-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--fg);
+        }
+
+        .transaction-category {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--fg-dim);
+        }
+
+        .transaction-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            color: var(--red);
+        }
+
+        .transaction-value.income {
+            color: var(--lime);
+        }
+
+        .transaction-date {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            color: var(--fg-dim);
+            text-align: right;
+            margin-top: 2px;
+        }
+
+        .tx-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tx-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        .transaction-item:hover .tx-actions {
+            opacity: 1;
+        }
+
+        .tx-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            border: 1px solid var(--line);
+            background: transparent;
+            color: var(--fg-dim);
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+
+        .tx-btn:hover {
+            border-color: var(--fg-faint);
+            color: var(--fg);
+            background: var(--bg-elev);
+        }
+
+        .tx-btn.del:hover {
+            border-color: var(--red);
+            color: var(--red);
+            background: color-mix(in srgb, var(--red) 8%, transparent);
+        }
+
+        .goal-card-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid var(--line);
+        }
+
+        .goal-btn {
+            flex: 1;
+            padding: 7px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: transparent;
+            color: var(--fg-dim);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+        }
+
+        .goal-btn:hover {
+            border-color: var(--fg-faint);
+            color: var(--fg);
+        }
+
+        .goal-btn.del:hover {
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        /* ── Filter bar ──────────────────────────────── */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            padding: 5px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: transparent;
+            color: var(--fg-dim);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .filter-chip:hover {
+            border-color: var(--fg-faint);
+            color: var(--fg);
+        }
+
+        .filter-chip.active {
+            background: var(--lime);
+            color: var(--ink);
+            border-color: var(--lime);
+        }
+
+        /* ── Category rows ───────────────────────────── */
+        .cat-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .cat-row:last-child {
+            border-bottom: none;
+        }
+
+        .cat-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .cat-info {
+            flex-grow: 1;
+        }
+
+        .cat-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .cat-bar-wrap {
+            height: 3px;
+            background: var(--line);
+            border-radius: 2px;
+            margin-top: 6px;
+        }
+
+        .cat-bar {
+            height: 3px;
+            border-radius: 2px;
+            background: var(--lime);
+            transition: width 0.6s ease;
+        }
+
+        .cat-amount {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            text-align: right;
+            min-width: 90px;
+        }
+
+        .cat-pct {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            color: var(--fg-dim);
+            margin-top: 2px;
+            text-align: right;
+        }
+
+        /* ── Goal cards ──────────────────────────────── */
+        .goal-card {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 24px;
+            background: var(--bg-card);
+        }
+
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .goal-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 18px;
+            font-weight: 400;
+            letter-spacing: -0.02em;
+        }
+
+        .goal-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            color: var(--fg-dim);
+        }
+
+        .goal-badge.on-track {
+            border-color: var(--lime);
+            color: var(--lime);
+        }
+
+        .goal-badge.behind {
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        .goal-progress-wrap {
+            height: 4px;
+            background: var(--line);
+            border-radius: 2px;
+            margin: 12px 0;
+        }
+
+        .goal-progress {
+            height: 4px;
+            border-radius: 2px;
+            background: var(--lime);
+            transition: width 0.8s ease;
+        }
+
+        .goal-progress.red {
+            background: var(--red);
+        }
+
+        .goal-numbers {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .goal-current {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 22px;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            color: var(--lime);
+            margin-top: 4px;
+        }
+
+        .goal-target {
+            color: var(--fg-dim);
+        }
+
+        /* ── Insight cards ───────────────────────────── */
+        .insight-card {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 24px;
+            background: var(--bg-card);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .insight-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--lime);
+        }
+
+        .insight-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 17px;
+            font-weight: 400;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+
+        .insight-body {
+            font-size: 13px;
+            color: var(--fg-dim);
+            line-height: 1.6;
+        }
+
+        .insight-action {
+            align-self: flex-start;
+        }
+
+        /* ── Empty state ─────────────────────────────── */
+        .empty {
+            text-align: center;
+            padding: 60px 0;
+            color: var(--fg-dim);
+        }
+
+        .empty-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+            opacity: 0.4;
+        }
+
+        .empty p {
+            font-size: 14px;
+        }
+
+        /* ── Modal ───────────────────────────────────── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(14, 14, 12, 0.82);
+            backdrop-filter: blur(6px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-elev);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 32px;
+            width: 420px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .modal-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 22px;
+            font-weight: 400;
+            letter-spacing: -0.02em;
+        }
+
+        .modal-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .modal-field label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--fg-dim);
+        }
+
+        .modal-field input,
+        .modal-field select {
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: var(--fg);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            transition: border-color 0.15s;
+        }
+
+        .modal-field input:focus,
+        .modal-field select:focus {
+            outline: none;
+            border-color: var(--lime);
+        }
+
+        .modal-field select option {
+            background: var(--bg-elev);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding-top: 4px;
+        }
+
+        /* ── Chat ────────────────────────────────────── */
+        .chat-container {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            z-index: 1000;
+        }
+
+        .chat-toggle {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: var(--lime);
+            color: var(--ink);
+            border: none;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 20px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 4px 16px color-mix(in srgb, var(--lime) 30%, transparent);
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-toggle:hover {
+            transform: scale(1.06);
+        }
+
+        .chat-window {
+            position: absolute;
+            bottom: 68px;
+            right: 0;
+            width: 380px;
+            height: 520px;
+            background: var(--bg-elev);
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+        }
+
+        .chat-window.active {
+            display: flex;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .chat-header {
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-header-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            color: var(--fg);
+        }
+
+        .chat-header-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--lime);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--lime);
+            animation: pulse 2s infinite;
+        }
+
+        .chat-close-btn {
+            background: none;
+            border: none;
+            color: var(--fg-dim);
+            font-size: 18px;
+            cursor: pointer;
+            transition: color 0.15s;
+            line-height: 1;
+            padding: 2px 4px;
+        }
+
+        .chat-close-btn:hover {
+            color: var(--fg);
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--fg-faint);
+            border-radius: 2px;
+        }
+
+        .message {
+            max-width: 84%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            line-height: 1.5;
+            font-size: 13px;
+        }
+
+        .message.user {
+            background: var(--lime);
+            color: var(--ink);
+            align-self: flex-end;
+            font-weight: 500;
+            border-bottom-right-radius: 3px;
+        }
+
+        .message.ai {
+            background: var(--bg-card);
+            color: var(--fg);
+            align-self: flex-start;
+            border: 1px solid var(--line);
+            border-bottom-left-radius: 3px;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding: 10px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            border-bottom-left-radius: 3px;
+            align-self: flex-start;
+        }
+
+        .typing-dot {
+            width: 5px;
+            height: 5px;
+            background: var(--fg-dim);
+            border-radius: 50%;
+            animation: typingBounce 1.2s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingBounce {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+            }
+
+            30% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .chat-input-area {
+            padding: 12px 14px;
+            border-top: 1px solid var(--line);
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input {
+            flex-grow: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            padding: 9px 12px;
+            border-radius: 6px;
+            color: var(--fg);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            transition: border-color 0.15s;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--lime);
+        }
+
+        .chat-input::placeholder {
+            color: var(--fg-dim);
+        }
+
+        .chat-send-btn {
+            padding: 9px 14px;
+            background: var(--lime);
+            color: var(--ink);
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.15s;
+        }
+
+        .chat-send-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        /* ── Responsive ──────────────────────────────── */
+        @media (max-width: 960px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+
+            .three-col {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .kpi-card:nth-child(2) {
+                border-right: none;
+            }
+
+            .kpi-card:nth-child(1),
+            .kpi-card:nth-child(2) {
+                border-bottom: 1px solid var(--line);
+            }
+        }
+
+        @media (max-width: 720px) {
+            .sidebar {
+                width: 64px;
+                padding: 24px 10px;
+            }
+
+            .logo {
+                display: none;
+            }
+
+            .nav-link span:last-child {
+                display: none;
+            }
+
+            .nav-link {
+                justify-content: center;
+                padding: 10px;
+            }
+
+            .btn-logout {
+                font-size: 0;
+                padding: 10px;
+            }
+
+            .main-content {
+                padding: 24px 20px;
+            }
+
+            .chat-window {
+                width: calc(100vw - 56px);
+            }
+
+            .three-col {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+<script>
+// ── Supabase Config ────────────────────────────────────────
+const SUPABASE_URL = 'https://bdnhtgawhzsikjquwvzj.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_w5a_CYoqxN2T38Hm_LEoBQ_LzicaQ22';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── Auth Functions ────────────────────────────────────────
+async function handleLogin(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return data.user;
+}
+
+async function handleRegister(email, password, fullName) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { full_name: fullName } }
+  });
+  if (error) throw error;
+  
+  // Fazer login automático após registro
+  const loginResult = await supabase.auth.signInWithPassword({ email, password });
+  if (loginResult.error) throw loginResult.error;
+  
+  // Redirecionar para o app
+  const user = loginResult.data.user;
+  showApp(fullName || user.email);
+  
+  return user;
+}
+
+async function handleLogout() {
+  await supabase.auth.signOut();
+  location.reload();
+}
+
+async function checkUser() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .single();
+    showApp(profile?.full_name || user.email);
+  }
+}
+
+// ── Transaction Functions ────────────────────────────────────────
+async function fetchTransactions() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('date', { ascending: false });
+  
+  if (error) console.error(error);
+  return data || [];
+}
+
+async function addTransaction(type, amount, category, description, date) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuário não autenticado');
+  
+  const { data, error } = await supabase
+    .from('transactions')
+    .insert([{
+      user_id: user.id,
+      type,
+      amount: parseFloat(amount),
+      category,
+      description,
+      date
+    }]);
+  
+  if (error) throw error;
+  return data;
+}
+
+// ── Goals Functions ────────────────────────────────────────
+async function fetchGoals() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  
+  const { data, error } = await supabase
+    .from('goals')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('deadline', { ascending: true });
+  
+  if (error) console.error(error);
+  return data || [];
+}
+
+async function addGoal(title, targetAmount, deadline) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuário não autenticado');
+  
+  const { data, error } = await supabase
+    .from('goals')
+    .insert([{
+      user_id: user.id,
+      title,
+      target_amount: parseFloat(targetAmount),
+      current_amount: 0,
+      deadline
+    }]);
+  
+  if (error) throw error;
+  return data;
+}
+
+// ── Aggregation Functions ────────────────────────────────────────
+async function fetchAll() {
+  state.transactions = await fetchTransactions();
+  state.goals = await fetchGoals();
+  calculateMetrics();
+}
+
+function calculateMetrics() {
+  const trans = state.transactions || [];
+  
+  state.balance = trans.reduce((sum, t) => {
+    return sum + (t.type === 'receita' ? t.amount : -t.amount);
+  }, 0);
+  
+  state.monthlyIncome = trans
+    .filter(t => t.type === 'receita' && isCurrentMonth(t.date))
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  state.monthlyExpense = trans
+    .filter(t => t.type === 'despesa' && isCurrentMonth(t.date))
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  state.categories = [...new Set(trans.map(t => t.category))];
+}
+
+function isCurrentMonth(dateStr) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+}
+
+        </script>
+    </head>
+
+<body>
+
+    <!-- ── Login screen ──────────────────────────────────────── -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-left">
+            <svg class="login-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 40 660 295" fill="none">
+                <text x="0" y="268" font-family="'Space Grotesk', ui-sans-serif, system-ui, sans-serif" font-size="300"
+                    font-weight="400" letter-spacing="-8" fill="#B6F13A">gst*</text>
+            </svg>
+
+            <!-- Animated GST asterisk for premium feel -->
+            <div class="login-visual-container">
+                <div class="gst-asterisk">*</div>
+                <div class="orb-aura"></div>
+            </div>
+
+            <div class="login-tagline">
+                <div class="login-tagline-label">
+                    <span class="eyebrow-dot"
+                        style="width:6px;height:6px;border-radius:50%;background:var(--lime);display:inline-block;animation:pulse 2s infinite"></span>
+                    Copiloto Financeiro
+                </div>
+                <h2>Controle total<br>das suas <em>finanças</em></h2>
+                <p>Entenda seus gastos, defina metas e receba insights gerados por IA — tudo em um só lugar.</p>
+            </div>
+        </div>
+
+        <div class="login-right">
+
+            <!-- ── Painel: Entrar ── -->
+            <div class="login-form-wrap" id="panelLogin">
+                <div>
+                    <div class="login-form-title">Entrar</div>
+                    <div class="login-form-subtitle">Acesse sua conta Xyra</div>
+                </div>
+
+                <div id="loginError" class="login-error">E-mail ou senha incorretos.</div>
+
+                <div class="login-fields">
+                    <div class="login-field">
+                        <label>E-mail</label>
+                        <input type="email" id="loginEmail" placeholder="voce@email.com" autocomplete="email">
+                    </div>
+                    <div class="login-field">
+                        <label>Senha</label>
+                        <div style="position:relative">
+                            <input type="password" id="loginPassword" placeholder="••••••••"
+                                autocomplete="current-password" style="padding-right:40px">
+                            <button type="button" id="togglePassword"
+                                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg-dim);font-size:14px;line-height:1;padding:0;transition:color 0.15s"
+                                title="Mostrar senha">
+                                <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="login-options">
+                    <label class="login-remember">
+                        <input type="checkbox" id="loginRemember"> Lembrar de mim
+                    </label>
+                    <a href="#" class="login-forgot">Esqueceu a senha?</a>
+                </div>
+
+                <button class="login-submit" id="loginSubmit">Entrar</button>
+
+                <div class="login-divider">ou</div>
+
+                <button class="login-alt-btn" id="loginDemo">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <circle cx="8" cy="8" r="7.5" stroke="currentColor" />
+                        <path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    Entrar com conta demo
+                </button>
+
+                <div class="login-signup">Não tem conta? <a href="#" id="goToRegister">Criar conta grátis</a></div>
+            </div>
+
+            <!-- ── Painel: Criar conta ── -->
+            <div class="login-form-wrap" id="panelRegister" style="display:none">
+                <div>
+                    <div class="login-form-title">Criar conta</div>
+                    <div class="login-form-subtitle">Comece de graça, sem cartão</div>
+                </div>
+
+                <div id="registerError" class="login-error"></div>
+
+                <div class="login-fields">
+                    <div class="login-field">
+                        <label>Nome</label>
+                        <input type="text" id="regNome" placeholder="Seu nome" autocomplete="name">
+                    </div>
+                    <div class="login-field">
+                        <label>E-mail</label>
+                        <input type="email" id="regEmail" placeholder="voce@email.com" autocomplete="email">
+                    </div>
+                    <div class="login-field">
+                        <label>Senha</label>
+                        <div style="position:relative">
+                            <input type="password" id="regPassword" placeholder="Mínimo 6 caracteres"
+                                autocomplete="new-password" style="padding-right:40px">
+                            <button type="button" id="toggleRegPassword"
+                                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg-dim);font-size:14px;line-height:1;padding:0;transition:color 0.15s"
+                                title="Mostrar senha">
+                                <svg id="eyeIconReg" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="login-field">
+                        <label>Confirmar senha</label>
+                        <input type="password" id="regConfirm" placeholder="Repita a senha" autocomplete="new-password">
+                    </div>
+                </div>
+
+                <button class="login-submit" id="registerSubmit">Criar conta</button>
+
+                <div class="login-divider">ou</div>
+
+                <button class="login-alt-btn" id="registerDemo">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <circle cx="8" cy="8" r="7.5" stroke="currentColor" />
+                        <path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    Entrar com conta demo
+                </button>
+
+                <div class="login-signup">Já tem conta? <a href="#" id="goToLogin">Entrar</a></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── App shell ──────────────────────────────────────────── -->
+    <div class="app-shell" id="appShell">
+
+        <!-- ── Sidebar ──────────────────────────────────────────── -->
+        <aside class="sidebar">
+            <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 40 660 295" fill="none">
+                <text x="0" y="268" font-family="'Space Grotesk', ui-sans-serif, system-ui, sans-serif" font-size="300"
+                    font-weight="400" letter-spacing="-8" fill="#B6F13A">gst*</text>
+            </svg>
+            <ul class="nav-menu" id="navMenu">
+                <li class="nav-item"><a class="nav-link active" data-page="dashboard"><span
+                            class="nav-dot"></span><span>Dashboard</span></a></li>
+                <li class="nav-item"><a class="nav-link" data-page="gastos"><span
+                            class="nav-dot"></span><span>Gastos</span></a></li>
+                <li class="nav-item"><a class="nav-link" data-page="categorias"><span
+                            class="nav-dot"></span><span>Categorias</span></a></li>
+                <li class="nav-item"><a class="nav-link" data-page="metas"><span
+                            class="nav-dot"></span><span>Metas</span></a></li>
+                <li class="nav-item"><a class="nav-link" data-page="relatorios"><span
+                            class="nav-dot"></span><span>Relatórios</span></a></li>
+                <li class="nav-item"><a class="nav-link" data-page="insights"><span
+                            class="nav-dot"></span><span>Insights</span></a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="btn-logout"><span>Sair</span></button>
+                <div class="sidebar-brand">
+                    <div class="sidebar-brand-name"
+                        style="font-family:'Space Grotesk'; font-size:20px; letter-spacing:-0.03em; color:var(--fg)">
+                        <span style="color:var(--lime)">X</span>yra
+                        <span
+                            style="color:var(--fg-faint); font-family:'JetBrains Mono'; font-size:9px; letter-spacing:0.1em; margin-left:8px">V0.1</span>
+                    </div>
+                    <div class="sidebar-brand-sig" style="margin-top:4px; opacity:0.8">
+                        <span style="color:var(--lime)">gst*</span> Intelligent Growth System
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ── Main ─────────────────────────────────────────────── -->
+        <main class="main-content">
+
+            <!-- ══ Dashboard ══════════════════════════════════════ -->
+            <div class="page active" id="page-dashboard">
+                <header class="header">
+                    <div class="header-left">
+                        <div class="eyebrow mono"><span class="eyebrow-dot"></span><span id="dashMonth">—</span></div>
+                        <h1 id="dashGreeting">Bem-vindo</h1>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-ghost" id="openReceita">+ Receita</button>
+                        <button class="btn btn-primary" id="openDespesa">+ Despesa</button>
+                    </div>
+                </header>
+
+                <!-- AI Insights Banner -->
+                <div id="aiInsightsBanner" class="ai-insights-banner">
+                    <div class="ai-insights-header">
+                        <div class="eyebrow-dot"></div>
+                        <span>Xyra Intelligence — Análise Estratégica</span>
+                    </div>
+                    <div id="aiInsightsContent" class="ai-insights-content">
+                        Processando seus dados financeiros para gerar insights proativos...
+                    </div>
+                </div>
+
+                <section class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Saldo Total</div>
+                        <div class="kpi-value" id="kpiSaldo">R$ 0,00</div>
+                        <div class="kpi-delta" id="kpiSaldoDelta">Nenhuma movimentação</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Gastos no Mês</div>
+                        <div class="kpi-value" id="kpiDespesas">R$ 0,00</div>
+                        <div class="kpi-delta" id="kpiDespesasDelta">0 transações</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Receita no Mês</div>
+                        <div class="kpi-value" id="kpiReceitas">R$ 0,00</div>
+                        <div class="kpi-delta" id="kpiReceitasDelta">0 entradas</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Balanço</div>
+                        <div class="kpi-value" id="kpiBalanco">R$ 0,00</div>
+                        <div class="kpi-delta" id="kpiBalancoDelta">receitas − despesas</div>
+                    </div>
+                </section>
+
+                <div class="two-col">
+                    <div class="card">
+                        <div class="card-label">Gastos por Categoria</div>
+                        <div class="chart-container" id="dashChartWrap">
+                            <div class="empty" id="dashChartEmpty">
+                                <div class="empty-icon">○</div>
+                                <p>Adicione despesas para ver a distribuição</p>
+                            </div>
+                            <canvas id="categoryChart" style="display:none"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-label">Transações Recentes</div>
+                        <div class="empty" id="txEmpty">
+                            <div class="empty-icon">↕</div>
+                            <p>Nenhuma transação ainda</p>
+                        </div>
+                        <ul class="transactions-list" id="transactionsList"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Gastos ══════════════════════════════════════════ -->
+            <div class="page" id="page-gastos">
+                <header class="header">
+                    <div class="header-left">
+                        <div class="eyebrow mono"><span class="eyebrow-dot"></span><span class="cur-month">—</span>
+                        </div>
+                        <h1>Gastos</h1>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-ghost" id="openReceita2">+ Receita</button>
+                        <button class="btn btn-primary" id="openDespesa2">+ Despesa</button>
+                    </div>
+                </header>
+
+                <div class="filter-bar" id="filterBar">
+                    <button class="filter-chip active" data-cat="todos">Todos</button>
+                    <button class="filter-chip" data-cat="Moradia">Moradia</button>
+                    <button class="filter-chip" data-cat="Alimentação">Alimentação</button>
+                    <button class="filter-chip" data-cat="Transporte">Transporte</button>
+                    <button class="filter-chip" data-cat="Lazer">Lazer</button>
+                    <button class="filter-chip" data-cat="Assinaturas">Assinaturas</button>
+                    <button class="filter-chip" data-cat="Saúde">Saúde</button>
+                    <button class="filter-chip" data-cat="Outros">Outros</button>
+                    <button class="filter-chip" data-cat="Receita">Receitas</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-label">Todas as Transações</div>
+                    <div class="empty" id="allTxEmpty">
+                        <div class="empty-icon">↕</div>
+                        <p>Nenhuma transação ainda. Use os botões acima para começar.</p>
+                    </div>
+                    <ul class="transactions-list" id="allTransactions"></ul>
+                </div>
+            </div>
+
+            <!-- ══ Categorias ══════════════════════════════════════ -->
+            <div class="page" id="page-categorias">
+                <header class="header">
+                    <div class="header-left">
+                        <div class="eyebrow mono"><span class="eyebrow-dot"></span><span class="cur-month">—</span>
+                        </div>
+                        <h1>Categorias</h1>
+                    </div>
+                </header>
+
+                <div class="two-col" id="catContent">
+                    <div class="card">
+                        <div class="card-label">Distribuição de Gastos</div>
+                        <div class="chart-container">
+                            <div class="empty" id="catChartEmpty">
+                                <div class="empty-icon">○</div>
+                                <p>Adicione despesas para ver o gráfico</p>
+                            </div>
+                            <canvas id="catPieChart" style="display:none"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-label">Detalhamento</div>
+                        <div id="catDetailEmpty" class="empty">
+                            <div class="empty-icon">≡</div>
+                            <p>Nenhuma categoria com gastos ainda</p>
+                        </div>
+                        <div id="catDetail"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Metas ═══════════════════════════════════════════ -->
+            <div class="page" id="page-metas">
+                <header class="header">
+                    <div class="header-left">
+                        <div class="eyebrow mono"><span class="eyebrow-dot"></span><span class="cur-month">—</span>
+                        </div>
+                        <h1>Metas</h1>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="openMeta">+ Nova Meta</button>
+                    </div>
+                </header>
+
+                <div class="empty" id="metasEmpty">
+                    <div class="empty-icon">◎</div>
+                    <p>Crie sua primeira meta financeira com o botão acima</p>
+                </div>
+                <div class="three-col" id="goalsGrid"></div>
+            </div>
+
+            <!-- ══ Relatórios ══════════════════════════════════════ -->
+            <div class="page" id="page-relatorios">
+                <header class="header">
+                    <div class="header-left">
+                        <div class="eyebrow mono"><span class="eyebrow-dot"></span>2026</div>
+                        <h1>Relatórios</h1>
+                    </div>
+                </header>
+
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Total de Receitas</div>
+                        <div class="kpi-value positive" id="relReceitas">R$ 0,00</div>
+                        <div class="kpi-delta">acumulado</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Total de Despesas</div>
+                        <div class="kpi-value negative" id="relDespesas">R$ 0,00</div>
+                        <div class="kpi-delta">acumulado</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Maior Despesa</div>
+                        <div class="kpi-value" id="relMaiorNome">—</div>
+                        <div class="kpi-delta" id="relMaiorValor">nenhuma ainda</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Transações</div>
+                        <div class="kpi-value" id="relCount">0</div>
+                        <div class="kpi-delta">no total</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-label">Receitas vs Despesas por Categoria</div>
+                    <div class="chart-container">
+                        <div class="empty" id="relChartEmpty">
+                            <div class="empty-icon">↗</div>
+                            <p>Adicione transações para gerar o relatório</p>
+                        </div>
+                        <canvas id="relatorioChart" style="display:none"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Insights ════════════════════════════════════════ -->
+            <div class="page" id="page-insights">
+                <header class="header">
+                    <div class="header-left">
+                        <div class="eyebrow mono"><span class="eyebrow-dot"></span>Análise IA</div>
+                        <h1>Insights</h1>
+                    </div>
+                </header>
+
+                <div class="empty" id="insightsEmpty" style="display:none">
+                    <div class="empty-icon">💡</div>
+                    <p>Adicione transações para receber insights personalizados</p>
+                </div>
+
+                <div class="three-col" id="insightsGrid">
+                    <div class="insight-card">
+                        <div class="insight-tag">Dica</div>
+                        <div class="insight-title">Comece registrando suas receitas</div>
+                        <div class="insight-body">Adicione seu salário ou outras entradas para que a Xyra possa calcular
+                            seu saldo e orçamento disponível.</div>
+                        <button class="btn btn-ghost btn-sm"
+                            onclick="navigate('dashboard');document.getElementById('openReceita').click()">Adicionar
+                            receita</button>
+                    </div>
+                    <div class="insight-card">
+                        <div class="insight-tag">Dica</div>
+                        <div class="insight-title">Registre suas despesas fixas</div>
+                        <div class="insight-body">Aluguel, assinaturas, parcelas — insira suas despesas recorrentes
+                            primeiro para ter uma visão real do quanto sobra no mês.</div>
+                        <button class="btn btn-ghost btn-sm"
+                            onclick="navigate('dashboard');document.getElementById('openDespesa').click()">Adicionar
+                            despesa</button>
+                    </div>
+                    <div class="insight-card">
+                        <div class="insight-tag">Dica</div>
+                        <div class="insight-title">Defina uma meta de emergência</div>
+                        <div class="insight-body">Especialistas recomendam guardar de 3 a 6 vezes o valor dos seus
+                            gastos mensais como reserva de emergência.</div>
+                        <button class="btn btn-ghost btn-sm"
+                            onclick="navigate('metas');document.getElementById('openMeta').click()">Criar meta</button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- ── Modal ─────────────────────────────────────────────── -->
+        <div class="modal-overlay" id="modalOverlay">
+            <div class="modal">
+                <div class="modal-title" id="modalTitle">Nova Despesa</div>
+                <div class="modal-field">
+                    <label>Descrição</label>
+                    <input type="text" id="modalDesc" placeholder="Ex: Supermercado">
+                </div>
+                <div class="modal-field">
+                    <label>Valor (R$)</label>
+                    <input type="number" id="modalValor" placeholder="0,00" min="0" step="0.01">
+                </div>
+                <div class="modal-field" id="modalCatField">
+                    <label>Categoria</label>
+                    <select id="modalCategoria">
+                        <option>Moradia</option>
+                        <option>Alimentação</option>
+                        <option>Transporte</option>
+                        <option>Lazer</option>
+                        <option>Assinaturas</option>
+                        <option>Saúde</option>
+                        <option>Outros</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-ghost" id="modalCancel">Cancelar</button>
+                    <button class="btn btn-primary" id="modalConfirm">Confirmar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Modal: Nova Meta ───────────────────────────────────── -->
+        <div class="modal-overlay" id="modalMetaOverlay">
+            <div class="modal">
+                <div class="modal-title">Nova Meta</div>
+                <div class="modal-field">
+                    <label>Nome da Meta</label>
+                    <input type="text" id="metaNome" placeholder="Ex: Viagem para o Nordeste">
+                </div>
+                <div class="modal-field">
+                    <label>Valor Alvo (R$)</label>
+                    <input type="number" id="metaAlvo" placeholder="0,00" min="0" step="0.01">
+                </div>
+                <div class="modal-field">
+                    <label>Valor Atual (R$)</label>
+                    <input type="number" id="metaAtual" placeholder="0,00" min="0" step="0.01">
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-ghost" id="metaCancel">Cancelar</button>
+                    <button class="btn btn-primary" id="metaConfirm">Criar Meta</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Chat ──────────────────────────────────────────────── -->
+        <div class="chat-container">
+            <button class="chat-toggle" id="chatToggle">✦</button>
+            <div class="chat-window" id="chatWindow">
+                <div class="chat-header">
+                    <div class="chat-header-info">
+                        <div class="status-dot"></div>
+                        <div>
+                            <div class="chat-header-title">Xyra</div>
+                            <div class="chat-header-sub">Copiloto Financeiro</div>
+                        </div>
+                    </div>
+                    <button class="chat-close-btn" id="chatClose">&times;</button>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message ai">Olá! Sou a Xyra. Pergunte sobre seus gastos, metas ou como economizar.</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Pergunte algo...">
+                    <button class="chat-send-btn" id="chatSend">→</button>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /.app-shell -->
+
+    <script>
+        // ── Supabase Configuration ──────────────────────────────
+        const SUPABASE_URL = 'https://bdnhtgawhzsikjquwvzj.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_w5a_CYoqxN2T38Hm_LEoBQ_LzicaQ22';
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        
+        // ── Supabase Config ────────────────────────────────────────
+        const SUPABASE_URL = 'https://bdnhtgawhzsikjquwvzj.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_w5a_CYoqxN2T38Hm_LEoBQ_LzicaQ22';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ── State ─────────────────────────────────────────────────
+        const state = {
+            transactions: [],
+            goals: [],
+            user: null,
+            profile: null
+        };
+
+        // ── Persistence & Auth ────────────────────────────────────
+        async function checkUser() {
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (user) {
+                state.user = user;
+                const { data: profile } = await _supabase.from('profiles').select('*').eq('id', user.id).single();
+                state.profile = profile;
+                showApp(profile?.full_name || user.email.split('@')[0]);
+            }
+        }
+
+        async function handleLogin(email, password) {
+            const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+            await checkUser();
+        }
+
+        async function handleRegister(email, password, name) {
+            const { data, error } = await _supabase.auth.signUp({
+                email,
+                password,
+                options: { data: { full_name: name } }
+            });
+            if (error) throw error;
+
+            // Create profile if not automatically done by trigger
+            const { error: pError } = await _supabase.from('profiles').insert([
+                { id: data.user.id, full_name: name }
+            ]);
+
+            await checkUser();
+        }
+
+        async function handleLogout() {
+            await _supabase.auth.signOut();
+            showLogin();
+        }
+
+        async function fetchAll() {
+            if (!state.user) return;
+
+            const [txRes, goalRes] = await Promise.all([
+                _supabase.from('transactions').select('*').order('date', { ascending: false }),
+                _supabase.from('goals').select('*').order('created_at', { ascending: false })
+            ]);
+
+            state.transactions = txRes.data || [];
+            state.goals = goalRes.data || [];
+            renderAll();
+            renderGoals();
+        }
+
+        // (Old persistence functions removed as we use Supabase now)
+
+        const CAT_COLORS = {
+            'Moradia': '#B6F13A',
+            'Alimentação': '#8F8C84',
+            'Transporte': '#FFC107',
+            'Lazer': '#E84040',
+            'Assinaturas': '#60A5FA',
+            'Saúde': '#A78BFA',
+            'Outros': '#3A3935'
+        };
+        const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+        function fmt(v) {
+            const n = typeof v === 'string' ? parseFloat(v) : v;
+            return 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        function today() {
+            const d = new Date();
+            return `${String(d.getDate()).padStart(2, '0')} ${MONTHS[d.getMonth()]}`;
+        }
+        function curMonth() {
+            const d = new Date();
+            return `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+        }
+
+        // ── Computed ──────────────────────────────────────────────
+        function computed() {
+            const txs = state.transactions;
+            const inc = txs.filter(t => t.is_income);
+            const exp = txs.filter(t => !t.is_income);
+            const totalInc = inc.reduce((s, t) => s + parseFloat(t.amount), 0);
+            const totalExp = exp.reduce((s, t) => s + parseFloat(t.amount), 0);
+            const saldo = totalInc - totalExp;
+            const catTotals = {};
+            exp.forEach(t => { catTotals[t.category] = (catTotals[t.category] || 0) + parseFloat(t.amount); });
+            const biggest = exp.length ? exp.reduce((a, b) => parseFloat(b.amount) > parseFloat(a.amount) ? b : a) : null;
+            return { totalInc, totalExp, saldo, catTotals, biggest, incCount: inc.length, expCount: exp.length };
+        }
+
+        // ── Render ────────────────────────────────────────────────
+        let dashChart = null, catChart = null, relChart = null;
+
+        function renderAll() {
+            renderKPIs();
+            renderTransactions();
+            renderCategoryChart();
+            renderCategoryDetail();
+            renderRelatorio();
+        }
+
+        function renderKPIs() {
+            const { totalInc, totalExp, saldo, expCount, incCount } = computed();
+            const saldoEl = document.getElementById('kpiSaldo');
+            saldoEl.textContent = fmt(saldo);
+            saldoEl.className = 'kpi-value ' + (saldo > 0 ? 'positive' : saldo < 0 ? 'negative' : '');
+            document.getElementById('kpiSaldoDelta').textContent =
+                state.transactions.length ? (saldo >= 0 ? '↑ saldo positivo' : '↓ saldo negativo') : 'Nenhuma movimentação';
+
+            const despEl = document.getElementById('kpiDespesas');
+            despEl.textContent = fmt(totalExp);
+            despEl.className = 'kpi-value ' + (totalExp > 0 ? 'negative' : '');
+            document.getElementById('kpiDespesasDelta').textContent = expCount + ' transaç' + (expCount === 1 ? 'ão' : 'ões');
+
+            const recEl = document.getElementById('kpiReceitas');
+            recEl.textContent = fmt(totalInc);
+            recEl.className = 'kpi-value ' + (totalInc > 0 ? 'positive' : '');
+            document.getElementById('kpiReceitasDelta').textContent = incCount + ' entr' + (incCount === 1 ? 'ada' : 'adas');
+
+            const balEl = document.getElementById('kpiBalanco');
+            balEl.textContent = fmt(saldo);
+            balEl.className = 'kpi-value ' + (saldo > 0 ? 'positive' : saldo < 0 ? 'negative' : '');
+            document.getElementById('kpiBalancoDelta').textContent = 'receitas − despesas';
+
+            // Relatórios KPIs
+            const { biggest } = computed();
+            document.getElementById('relReceitas').textContent = fmt(totalInc);
+            document.getElementById('relDespesas').textContent = fmt(totalExp);
+            document.getElementById('relCount').textContent = state.transactions.length;
+            document.getElementById('relMaiorNome').textContent = biggest ? biggest.description : '—';
+            document.getElementById('relMaiorValor').textContent = biggest ? fmt(biggest.amount) : 'nenhuma ainda';
+        }
+
+        function renderTransactions() {
+            const txs = state.transactions;
+            const isEmpty = txs.length === 0;
+
+            // Dashboard list (last 5)
+            document.getElementById('txEmpty').style.display = isEmpty ? '' : 'none';
+            const dashList = document.getElementById('transactionsList');
+            dashList.innerHTML = '';
+            txs.slice(0, 5).forEach(t => dashList.appendChild(buildTxRow(t)));
+
+            // Gastos full list
+            document.getElementById('allTxEmpty').style.display = isEmpty ? '' : 'none';
+            const allList = document.getElementById('allTransactions');
+            allList.innerHTML = '';
+            const activeChip = document.querySelector('.filter-chip.active');
+            const activeCat = activeChip ? activeChip.dataset.cat : 'todos';
+            txs.forEach(t => {
+                const row = buildTxRow(t);
+                row.dataset.cat = t.is_income ? 'Receita' : t.category;
+                if (activeCat !== 'todos' && row.dataset.cat !== activeCat) row.style.display = 'none';
+                allList.appendChild(row);
+            });
+        }
+
+        function buildTxRow(t, showActions = true) {
+            const li = document.createElement('li');
+            li.className = 'transaction-item';
+            li.dataset.cat = t.is_income ? 'Receita' : t.category;
+            li.innerHTML = `
+        <div class="transaction-details">
+            <span class="transaction-name">${t.description}</span>
+            <span class="transaction-category">${t.is_income ? 'Receita' : t.category} · ${t.date}</span>
+        </div>
+        <div class="tx-right">
+            ${showActions ? `<div class="tx-actions">
+                <button class="tx-btn edit" title="Editar">✎</button>
+                <button class="tx-btn del" title="Apagar">×</button>
+            </div>` : ''}
+            <span class="transaction-value ${t.is_income ? 'income' : ''}">${t.is_income ? '+' : '−'} ${fmt(t.amount)}</span>
+        </div>`;
+            if (showActions) {
+                li.querySelector('.tx-btn.edit').addEventListener('click', () => openEditModal(t));
+                li.querySelector('.tx-btn.del').addEventListener('click', async () => {
+                    if (confirm('Deseja apagar esta transação?')) {
+                        const { error } = await _supabase.from('transactions').delete().eq('id', t.id);
+                        if (!error) await fetchAll();
+                    }
+                });
+            }
+            return li;
+        }
+
+        function renderCategoryChart() {
+            const { catTotals } = computed();
+            const cats = Object.keys(catTotals);
+            const hasData = cats.length > 0;
+            const canvas = document.getElementById('categoryChart');
+            const empty = document.getElementById('dashChartEmpty');
+
+            empty.style.display = hasData ? 'none' : '';
+            canvas.style.display = hasData ? 'block' : 'none';
+
+            const labels = cats;
+            const data = cats.map(c => catTotals[c]);
+            const colors = cats.map(c => CAT_COLORS[c] || '#8F8C84');
+            const legendCfg = { position: 'right', labels: { color: '#8F8C84', font: { family: 'JetBrains Mono', size: 10 }, padding: 16, boxWidth: 10, boxHeight: 10 } };
+
+            if (!dashChart) {
+                dashChart = new Chart(canvas, {
+                    type: 'doughnut',
+                    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#1C1C19', hoverOffset: 6 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: legendCfg } }
+                });
+            } else {
+                dashChart.data.labels = labels;
+                dashChart.data.datasets[0].data = data;
+                dashChart.data.datasets[0].backgroundColor = colors;
+                dashChart.update();
+            }
+
+            // Categorias page mirror
+            const catCanvas = document.getElementById('catPieChart');
+            const catEmpty = document.getElementById('catChartEmpty');
+            catEmpty.style.display = hasData ? 'none' : '';
+            catCanvas.style.display = hasData ? 'block' : 'none';
+
+            if (!catChart && hasData) {
+                catChart = new Chart(catCanvas, {
+                    type: 'doughnut',
+                    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#1C1C19', hoverOffset: 6 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: legendCfg } }
+                });
+            } else if (catChart) {
+                catChart.data.labels = labels;
+                catChart.data.datasets[0].data = data;
+                catChart.data.datasets[0].backgroundColor = colors;
+                catChart.update();
+            }
+        }
+
+        function renderCategoryDetail() {
+            const { catTotals } = computed();
+            const cats = Object.keys(catTotals).sort((a, b) => catTotals[b] - catTotals[a]);
+            const total = Object.values(catTotals).reduce((s, v) => s + v, 0);
+            const empty = document.getElementById('catDetailEmpty');
+            const detail = document.getElementById('catDetail');
+
+            empty.style.display = cats.length ? 'none' : '';
+            detail.innerHTML = '';
+            cats.forEach(cat => {
+                const v = catTotals[cat];
+                const pct = total > 0 ? Math.round((v / total) * 100) : 0;
+                const col = CAT_COLORS[cat] || '#8F8C84';
+                const row = document.createElement('div');
+                row.className = 'cat-row';
+                row.innerHTML = `
+            <div class="cat-dot" style="background:${col}"></div>
+            <div class="cat-info">
+                <div class="cat-name">${cat}</div>
+                <div class="cat-bar-wrap"><div class="cat-bar" style="width:${pct}%;background:${col}"></div></div>
+            </div>
+            <div>
+                <div class="cat-amount">${fmt(v)}</div>
+                <div class="cat-pct">${pct}%</div>
+            </div>`;
+                detail.appendChild(row);
+            });
+        }
+
+        function renderRelatorio() {
+            const { catTotals } = computed();
+            const cats = Object.keys(catTotals);
+            const hasData = cats.length > 0;
+            const canvas = document.getElementById('relatorioChart');
+            const empty = document.getElementById('relChartEmpty');
+
+            empty.style.display = hasData ? 'none' : '';
+            canvas.style.display = hasData ? 'block' : 'none';
+
+            if (!hasData) return;
+
+            const data = cats.map(c => catTotals[c]);
+            const colors = cats.map(c => CAT_COLORS[c] || '#8F8C84');
+            const scaleCfg = {
+                x: { grid: { color: '#23221E' }, ticks: { color: '#8F8C84', font: { family: 'JetBrains Mono', size: 10 } } },
+                y: { grid: { color: '#23221E' }, ticks: { color: '#8F8C84', font: { family: 'JetBrains Mono', size: 10 }, callback: v => fmt(v) } }
+            };
+
+            if (!relChart) {
+                relChart = new Chart(canvas, {
+                    type: 'bar',
+                    data: { labels: cats, datasets: [{ label: 'Despesas por Categoria', data, backgroundColor: colors, borderRadius: 4 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#8F8C84', font: { family: 'JetBrains Mono', size: 10 } } } }, scales: scaleCfg }
+                });
+            } else {
+                relChart.data.labels = cats;
+                relChart.data.datasets[0].data = data;
+                relChart.data.datasets[0].backgroundColor = colors;
+                relChart.update();
+            }
+        }
+
+        function renderGoals() {
+            const grid = document.getElementById('goalsGrid');
+            const empty = document.getElementById('metasEmpty');
+            empty.style.display = state.goals.length ? 'none' : '';
+            grid.innerHTML = '';
+            state.goals.forEach(g => {
+                const target = parseFloat(g.target_amount);
+                const current = parseFloat(g.current_amount);
+                const pct = Math.min(100, Math.round((current / target) * 100));
+                const onTrack = pct >= 50;
+                const card = document.createElement('div');
+                card.className = 'goal-card';
+                card.innerHTML = `
+            <div class="goal-header">
+                <div class="goal-title">${g.name}</div>
+                <span class="goal-badge ${onTrack ? 'on-track' : 'behind'}">${onTrack ? 'No prazo' : 'Atenção'}</span>
+            </div>
+            <div class="goal-current" style="color:${onTrack ? 'var(--lime)' : 'var(--red)'}">${fmt(current)}</div>
+            <div class="goal-progress-wrap"><div class="goal-progress ${onTrack ? '' : 'red'}" style="width:${pct}%"></div></div>
+            <div class="goal-numbers">
+                <span class="goal-target">Meta: ${fmt(target)}</span>
+                <span style="color:${onTrack ? 'var(--lime)' : 'var(--red)'};font-size:13px">${pct}%</span>
+            </div>
+            <div class="goal-card-actions">
+                <button class="goal-btn edit">Editar</button>
+                <button class="goal-btn del">Apagar</button>
+            </div>`;
+                card.querySelector('.goal-btn.edit').addEventListener('click', () => openEditGoal(g));
+                card.querySelector('.goal-btn.del').addEventListener('click', async () => {
+                    if (confirm('Deseja apagar esta meta?')) {
+                        const { error } = await _supabase.from('goals').delete().eq('id', g.id);
+                        if (!error) await fetchAll();
+                    }
+                });
+                grid.appendChild(card);
+            });
+        }
+
+        // ── Edit transaction ───────────────────────────────────────
+        let editingTxId = null;
+
+        function openEditModal(t) {
+            editingTxId = t.id;
+            modalTitle.textContent = t.is_income ? 'Editar Receita' : 'Editar Despesa';
+            modalCatFld.style.display = t.is_income ? 'none' : 'flex';
+            modalDesc.value = t.description;
+            modalValor.value = t.amount;
+            if (!t.is_income) modalCat.value = t.category;
+            modalMode = t.is_income ? 'receita' : 'despesa';
+            modalOverlay.classList.add('active');
+            setTimeout(() => modalDesc.focus(), 50);
+        }
+
+        // ── Edit goal ──────────────────────────────────────────────
+        let editingGoalId = null;
+
+        function openEditGoal(g) {
+            editingGoalId = g.id;
+            document.getElementById('metaNome').value = g.name;
+            document.getElementById('metaAlvo').value = g.target_amount;
+            document.getElementById('metaAtual').value = g.current_amount;
+            modalMetaOverlay.classList.add('active');
+            setTimeout(() => document.getElementById('metaNome').focus(), 50);
+        }
+
+        // ── Router ────────────────────────────────────────────────
+        const navLinks = document.querySelectorAll('.nav-link[data-page]');
+        const pages = document.querySelectorAll('.page');
+
+        function navigate(pageId) {
+            pages.forEach(p => p.classList.remove('active'));
+            navLinks.forEach(l => l.classList.remove('active'));
+            const target = document.getElementById('page-' + pageId);
+            if (target) target.classList.add('active');
+            const link = document.querySelector(`.nav-link[data-page="${pageId}"]`);
+            if (link) link.classList.add('active');
+        }
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', e => { e.preventDefault(); navigate(link.dataset.page); });
+        });
+
+        // ── Filter (Gastos) ───────────────────────────────────────
+        document.getElementById('filterBar').addEventListener('click', e => {
+            const chip = e.target.closest('.filter-chip');
+            if (!chip) return;
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            renderTransactions();
+        });
+
+        // ── Modal (Transação) ─────────────────────────────────────
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalDesc = document.getElementById('modalDesc');
+        const modalValor = document.getElementById('modalValor');
+        const modalCat = document.getElementById('modalCategoria');
+        const modalCatFld = document.getElementById('modalCatField');
+        let modalMode = 'despesa';
+
+        function openModal(mode) {
+            editingTxId = null;
+            modalMode = mode;
+            modalTitle.textContent = mode === 'despesa' ? 'Nova Despesa' : 'Nova Receita';
+            modalCatFld.style.display = mode === 'despesa' ? 'flex' : 'none';
+            modalDesc.value = ''; modalValor.value = '';
+            modalOverlay.classList.add('active');
+            setTimeout(() => modalDesc.focus(), 50);
+        }
+
+        ['openDespesa', 'openDespesa2'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('click', () => openModal('despesa'));
+        });
+        ['openReceita', 'openReceita2'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('click', () => openModal('receita'));
+        });
+
+        document.getElementById('modalCancel').addEventListener('click', () => modalOverlay.classList.remove('active'));
+        modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) modalOverlay.classList.remove('active'); });
+
+        document.getElementById('modalConfirm').addEventListener('click', async () => {
+            const name = modalDesc.value.trim();
+            const value = parseFloat(modalValor.value);
+            if (!name || isNaN(value) || value <= 0) { modalDesc.focus(); return; }
+            const is_income = modalMode === 'receita';
+            const category = is_income ? 'Receita' : modalCat.value;
+
+            const payload = {
+                user_id: state.user.id,
+                description: name,
+                amount: value,
+                category: category,
+                is_income: is_income,
+                date: new Date().toISOString().split('T')[0]
+            };
+
+            if (editingTxId !== null) {
+                await _supabase.from('transactions').update(payload).eq('id', editingTxId);
+                editingTxId = null;
+            } else {
+                await _supabase.from('transactions').insert([payload]);
+            }
+
+            modalOverlay.classList.remove('active');
+            await fetchAll();
+        });
+
+        document.getElementById('modalValor').addEventListener('keypress', e => {
+            if (e.key === 'Enter') document.getElementById('modalConfirm').click();
+        });
+
+        // ── Modal (Meta) ──────────────────────────────────────────
+        const modalMetaOverlay = document.getElementById('modalMetaOverlay');
+        document.getElementById('openMeta').addEventListener('click', () => {
+            editingGoalId = null;
+            document.getElementById('metaNome').value = '';
+            document.getElementById('metaAlvo').value = '';
+            document.getElementById('metaAtual').value = '';
+            modalMetaOverlay.classList.add('active');
+            setTimeout(() => document.getElementById('metaNome').focus(), 50);
+        });
+        document.getElementById('metaCancel').addEventListener('click', () => modalMetaOverlay.classList.remove('active'));
+        modalMetaOverlay.addEventListener('click', e => { if (e.target === modalMetaOverlay) modalMetaOverlay.classList.remove('active'); });
+
+        document.getElementById('metaConfirm').addEventListener('click', async () => {
+            const nome = document.getElementById('metaNome').value.trim();
+            const alvo = parseFloat(document.getElementById('metaAlvo').value);
+            const atual = parseFloat(document.getElementById('metaAtual').value) || 0;
+            if (!nome || isNaN(alvo) || alvo <= 0) { document.getElementById('metaNome').focus(); return; }
+
+            const payload = {
+                user_id: state.user.id,
+                name: nome,
+                target_amount: alvo,
+                current_amount: atual
+            };
+
+            if (editingGoalId !== null) {
+                await _supabase.from('goals').update(payload).eq('id', editingGoalId);
+                editingGoalId = null;
+            } else {
+                await _supabase.from('goals').insert([payload]);
+            }
+
+            modalMetaOverlay.classList.remove('active');
+            await fetchAll();
+        });
+
+        // ── Chat ──────────────────────────────────────────────────
+        const chatToggle = document.getElementById('chatToggle');
+        const chatWindow = document.getElementById('chatWindow');
+        const chatClose = document.getElementById('chatClose');
+        const chatInput = document.getElementById('chatInput');
+        const chatSend = document.getElementById('chatSend');
+        const chatMessages = document.getElementById('chatMessages');
+
+        chatToggle.addEventListener('click', () => {
+            chatWindow.classList.toggle('active');
+            if (chatWindow.classList.contains('active')) chatInput.focus();
+        });
+        chatClose.addEventListener('click', () => chatWindow.classList.remove('active'));
+
+        function addMsg(text, sender) {
+            const el = document.createElement('div');
+            el.classList.add('message', sender);
+            el.innerHTML = text; // Mudado de textContent para innerHTML para suportar formatação
+            chatMessages.appendChild(el);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Animação de entrada
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(10px)';
+            el.style.transition = 'all 0.3s ease';
+            requestAnimationFrame(() => {
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            });
+        }
+        function showTyping() {
+            const el = document.createElement('div');
+            el.classList.add('typing-indicator'); el.id = 'typingIndicator';
+            el.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+            chatMessages.appendChild(el);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        function removeTyping() { document.getElementById('typingIndicator')?.remove(); }
+
+        async function getResponse(msg, isAuto = false) {
+            try {
+                console.log('Enviando mensagem:', msg);
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: msg,
+                        transactions: state.transactions || []
+                    })
+                });
+                
+                console.log('Status:', res.status);
+                
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    console.error('API error:', errorText);
+                    throw new Error('API returned ' + res.status);
+                }
+                
+                const data = await res.json();
+                console.log('Response:', data);
+                let reply = data.reply || 'Desculpe, tive um problema ao processar isso.';
+                
+                // Formatação de Markdown para HTML
+                reply = reply.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                reply = reply.replace(/\n/g, '<br>');
+                
+                return reply;
+            } catch (err) {
+                console.error('Chat error:', err);
+                return 'Erro: ' + err.message;
+            }
+        }
+
+        async function getAutomaticInsights() {
+            const banner = document.getElementById('aiInsightsBanner');
+            const content = document.getElementById('aiInsightsContent');
+
+            // Pequeno delay para o dashboard carregar primeiro visualmente
+            setTimeout(async () => {
+                banner.classList.add('visible');
+                const prompt = "Faça uma análise rápida da minha situação financeira atual baseada nessas transações e me dê 3 insights curtos e acionáveis em uma única frase ou parágrafo curto.";
+                const insight = await getResponse(prompt, true);
+                content.innerHTML = insight;
+            }, 1500);
+        }
+
+        async function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+            addMsg(text, 'user');
+            chatInput.value = '';
+            showTyping();
+            const reply = await getResponse(text);
+            removeTyping();
+            addMsg(reply, 'ai');
+        }
+        chatSend.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+
+        // ── Auth ──────────────────────────────────────────────────
+        const loginScreen = document.getElementById('loginScreen');
+        const appShell = document.getElementById('appShell');
+        const loginError = document.getElementById('loginError');
+
+        async function showApp(name) {
+            state.userName = name;
+            await fetchAll();
+
+            // reset chart canvases so Chart.js can reinit
+
+            // reset chart canvases so Chart.js can reinit
+            ['categoryChart', 'catPieChart', 'relatorioChart'].forEach(id => {
+                const old = document.getElementById(id);
+                const clone = old.cloneNode(false);
+                old.parentNode.replaceChild(clone, old);
+            });
+
+            loginScreen.classList.add('hidden');
+            appShell.classList.add('visible');
+            navigate('dashboard');
+
+            const month = curMonth();
+            document.getElementById('dashMonth').textContent = month;
+            document.querySelectorAll('.cur-month').forEach(el => el.textContent = month);
+            document.getElementById('dashGreeting').textContent = 'Olá, ' + name;
+
+            renderAll();
+            renderGoals();
+
+            // Dispara insights automáticos após carregar os dados
+            getAutomaticInsights();
+        }
+
+        function showLogin() {
+            appShell.classList.remove('visible');
+            loginScreen.classList.remove('hidden');
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            loginError.classList.remove('visible');
+            chatWindow.classList.remove('active');
+        }
+
+        document.getElementById('loginSubmit').addEventListener('click', async () => {
+            const email = document.getElementById('loginEmail').value.trim();
+            const pass = document.getElementById('loginPassword').value;
+            if (!email || !pass) { loginError.textContent = 'E-mail e senha são obrigatórios.'; loginError.classList.add('visible'); return; }
+
+            try {
+                loginError.classList.remove('visible');
+                await handleLogin(email, pass);
+            } catch (err) {
+                loginError.textContent = 'Erro ao entrar: ' + err.message;
+                loginError.classList.add('visible');
+            }
+        });
+
+        document.getElementById('registerSubmit').addEventListener('click', async () => {
+            const name = document.getElementById('regNome').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const pass = document.getElementById('regPassword').value;
+            const conf = document.getElementById('regConfirm').value;
+            const regError = document.getElementById('registerError');
+
+            if (!name || !email || !pass) { regError.textContent = 'Todos os campos são obrigatórios.'; regError.classList.add('visible'); return; }
+            if (pass !== conf) { regError.textContent = 'As senhas não coincidem.'; regError.classList.add('visible'); return; }
+
+            try {
+                regError.classList.remove('visible');
+                await handleRegister(email, pass, name);
+            } catch (err) {
+                regError.textContent = 'Erro ao criar conta: ' + err.message;
+                regError.classList.add('visible');
+            }
+        });
+
+        document.getElementById('goToRegister').addEventListener('click', e => {
+            e.preventDefault();
+            document.getElementById('panelLogin').style.display = 'none';
+            document.getElementById('panelRegister').style.display = 'flex';
+        });
+
+        document.getElementById('goToLogin').addEventListener('click', e => {
+            e.preventDefault();
+            document.getElementById('panelRegister').style.display = 'none';
+            document.getElementById('panelLogin').style.display = 'flex';
+        });
+
+        document.getElementById('loginDemo').addEventListener('click', async () => {
+            // For demo, we can use a pre-created demo account or just skip auth (not recommended for "real" backend)
+            // For now, let's just show an alert or login with a demo email if it exists
+            alert('A conta demo requer um e-mail: demo@xyra.com.br / senha: 123456');
+            document.getElementById('loginEmail').value = 'demo@xyra.com.br';
+            document.getElementById('loginPassword').value = '123456';
+        });
+
+        document.getElementById('togglePassword').addEventListener('click', () => {
+            const input = document.getElementById('loginPassword');
+            const icon = document.getElementById('eyeIcon');
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            icon.innerHTML = show
+                ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>'
+                : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+            document.getElementById('togglePassword').style.color = show ? 'var(--lime)' : 'var(--fg-dim)';
+        });
+
+        document.getElementById('toggleRegPassword').addEventListener('click', () => {
+            const input = document.getElementById('regPassword');
+            const icon = document.getElementById('eyeIconReg');
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            icon.innerHTML = show
+                ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>'
+                : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+            document.getElementById('toggleRegPassword').style.color = show ? 'var(--lime)' : 'var(--fg-dim)';
+        });
+
+        document.getElementById('loginEmail').addEventListener('keypress', e => {
+            if (e.key === 'Enter') document.getElementById('loginPassword').focus();
+        });
+        document.getElementById('loginPassword').addEventListener('keypress', e => {
+            if (e.key === 'Enter') document.getElementById('loginSubmit').click();
+        });
+
+        document.querySelector('.btn-logout').addEventListener('click', handleLogout);
+
+        // ── Auto-login ────────────────────────────────────────────
+        checkUser();
+    </script>
+</body>
+
+</html>
