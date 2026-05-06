@@ -1,0 +1,12 @@
+{
+  "name": "xyra-finance",
+  "version": "1.0.0",
+  "description": "Financial Copilot",
+  "main": "index.html",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.20.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  }
+}
